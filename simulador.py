@@ -1,10 +1,13 @@
+import random
+
 class Simulador:
-    def __init__(self): #listas de los estados de los ciudadanos
+    def __init__(self):
         self.susceptibles = []
         self.infectados = []
         self.recuperados = []
+        self.umbral_infeccion = 1  # Umbral de interacciones necesarias para infectar
 
-    def set_comunidad(self, comunidad): #clasifica a los ciudadanos segun su estado
+    def set_comunidad(self, comunidad):
         self.comunidad = comunidad
         self.susceptibles = [c for c in comunidad.ciudadanos if c.estado == 'S']
         self.infectados = [c for c in comunidad.ciudadanos if c.estado == 'I']
@@ -12,41 +15,38 @@ class Simulador:
 
     def run(self, pasos):
         for dia in range(pasos):
+            self.comunidad.actualizar_contactos()  # Actualizar los contactos diarios
             self.simular_paso()
-            print(
-                f"Dia {dia + 1}: Susceptibles: {len(self.susceptibles)}, Infectados: {len(self.infectados)}, Recuperados: {len(self.recuperados)}")
+            print(f"Dia {dia + 1}: Susceptibles: {len(self.susceptibles)}, Infectados: {len(self.infectados)}, Recuperados: {len(self.recuperados)}")
 
     def simular_paso(self):
         nuevos_infectados = []
         nuevos_recuperados = []
 
-        #Calcular número de nuevos infectados determinísticamente
-        tasa_infeccion = self.comunidad.enfermedad.infeccion_probable # tasa_infeccion es la probabilidad de infección lo llama desde el main
-        nuevos_infectados_count = int( #calcula el número de nuevos infectados con la tasa de infección y la interacción entre infectados y susceptibles
-            tasa_infeccion * len(self.infectados) * len(self.susceptibles) / len(self.comunidad.ciudadanos)) # Representa el potencial de interacción entre los infectados y los susceptibles
+        # Calcular número de nuevos infectados basado en contactos directos
+        tasa_infeccion = self.comunidad.enfermedad.infeccion_probable * 0.5  # Ajustar la tasa de infección
+        for infectado in self.infectados:
+            for contacto in infectado.contactos:
+                if contacto.estado == 'S':
+                    # Contar interacciones con infectados
+                    interacciones_infectados = sum(1 for i in contacto.contactos if i.estado == 'I')
+                    if interacciones_infectados >= self.umbral_infeccion and random.random() < tasa_infeccion:
+                        nuevos_infectados.append(contacto)
 
-        #Limitar el número de nuevos infectados al número de susceptibles
-        nuevos_infectados_count = min(nuevos_infectados_count, len(self.susceptibles)) #Esta línea asegura que el numero de nuevos infectados no supere a los susceptibles disponibles
+        # Calcular número de nuevos recuperados
+        tasa_recuperacion = self.comunidad.enfermedad.recuperacion_probable
+        for infectado in self.infectados:
+            infectado.pasos_infectado += 1
+            if infectado.pasos_infectado >= 15 or random.random() < tasa_recuperacion:
+                nuevos_recuperados.append(infectado)
 
-        for i in range(nuevos_infectados_count): #se utiliza para añadir los ciudadanos que se han infectado (inter desde 0 hasta nuevo infectado)
-            nuevos_infectados.append(self.susceptibles[i]) #busca en la lista de suceptibles para infectarlos
-
-        #Calcular número de nuevos recuperados determinísticamente
-        tasa_recuperacion = self.comunidad.enfermedad.recuperacion_probable #es la probabilidad diaria de que un ciudadano infectado se recupere.
-        nuevos_recuperados_count = int(tasa_recuperacion * len(self.infectados))
-
-        #Limitar el número de nuevos recuperados al número de infectados
-        nuevos_recuperados_count = min(nuevos_recuperados_count, len(self.infectados))
-
-        for i in range(nuevos_recuperados_count): #busca en la lista de nuevos_recuperados
-            nuevos_recuperados.append(self.infectados[i]) #busca en la lista de infectados para que se recuperen
-
-        #actualiza el estado remueve de la lista susceptibles a la lista de infectados
+        # Actualización de estados
         for infectado in nuevos_infectados:
-            self.susceptibles.remove(infectado) #remueve al ciudadano de la lista de S
-            infectado.estado = 'I' #Cambia su estado
-            infectado.pasos_infectado = 0 #resetea su contador
-            self.infectados.append(infectado) #añade el ciudadano a la lista de infectados
+            if infectado in self.susceptibles:
+                self.susceptibles.remove(infectado)
+                infectado.estado = 'I'
+                infectado.pasos_infectado = 0
+                self.infectados.append(infectado)
 
         for recuperado in nuevos_recuperados:
             self.infectados.remove(recuperado)
