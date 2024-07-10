@@ -5,6 +5,7 @@ class Comunidad:
     def __init__(self, num_ciudadanos, enfermedad, num_infectados):
         self.enfermedad = enfermedad
         self.ciudadanos = self.crear_ciudadanos(num_ciudadanos, num_infectados)
+        self.crear_contactos_fijos()
 
     def crear_ciudadanos(self, num_ciudadanos, num_infectados):
         ciudadanos = [Ciudadano(id=i, comunidad=self) for i in range(num_ciudadanos)]
@@ -16,12 +17,15 @@ class Comunidad:
 
         return ciudadanos
 
-    def actualizar_contactos(self):
+    def crear_contactos_fijos(self):
         for ciudadano in self.ciudadanos:
-            ciudadano.contactos = []
-            num_contactos = random.randint(0, 8)  #Permitir entre 0 y 8 contactos
-            contactos = random.sample(self.ciudadanos, k=num_contactos)
+            num_contactos = random.randint(0, 8)
+            contactos = random.sample([c for c in self.ciudadanos if c != ciudadano], k=num_contactos)
             for contacto in contactos:
-                if contacto != ciudadano:
-                    ciudadano.agregar_contacto(contacto)
-                    contacto.agregar_contacto(ciudadano)
+                ciudadano.agregar_contacto(contacto)
+                contacto.agregar_contacto(ciudadano)
+
+    def actualizar_contactos_diarios(self):
+        for ciudadano in self.ciudadanos:
+            num_contactos_diarios = random.randint(0, len(ciudadano.contactos))
+            ciudadano.contactos_diarios = random.sample(ciudadano.contactos, k=num_contactos_diarios)
