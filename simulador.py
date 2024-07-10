@@ -15,7 +15,7 @@ class Simulador:
 
     def run(self, pasos):
         for dia in range(pasos):
-            self.comunidad.actualizar_contactos()  # Actualizar los contactos diarios
+            self.comunidad.actualizar_contactos_diarios()  # Actualizar los contactos diarios
             self.simular_paso()
             print(f"Dia {dia + 1}: Susceptibles: {len(self.susceptibles)}, Infectados: {len(self.infectados)}, Recuperados: {len(self.recuperados)}")
 
@@ -26,10 +26,10 @@ class Simulador:
         # Calcular número de nuevos infectados basado en contactos directos
         tasa_infeccion = self.comunidad.enfermedad.infeccion_probable * 0.5  # Ajustar la tasa de infección
         for infectado in self.infectados:
-            for contacto in infectado.contactos:
+            for contacto in infectado.contactos_diarios:
                 if contacto.estado == 'S':
                     # Contar interacciones con infectados
-                    interacciones_infectados = sum(1 for i in contacto.contactos if i.estado == 'I')
+                    interacciones_infectados = sum(1 for i in contacto.contactos_diarios if i.estado == 'I')
                     if interacciones_infectados >= self.umbral_infeccion and random.random() < tasa_infeccion:
                         nuevos_infectados.append(contacto)
 
