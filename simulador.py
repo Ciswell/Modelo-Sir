@@ -1,23 +1,23 @@
 import random
+import numpy as np  # Importar numpy
 
 class Simulador:
     def __init__(self):
-        self.susceptibles = []
-        self.infectados = []
-        self.recuperados = []
+        self.susceptibles = np.array([])  # Usar numpy arrays
+        self.infectados = np.array([])    # Usar numpy arrays
+        self.recuperados = np.array([])   # Usar numpy arrays
         self.umbral_infeccion = 1  # Umbral de interacciones necesarias para infectar
 
     def set_comunidad(self, comunidad):
         self.comunidad = comunidad
-        self.susceptibles = [c for c in comunidad.ciudadanos if c.estado == 'S']
-        self.infectados = [c for c in comunidad.ciudadanos if c.estado == 'I']
-        self.recuperados = [c for c in comunidad.ciudadanos if c.estado == 'R']
+        self.susceptibles = np.array([c for c in comunidad.ciudadanos if c.estado == 'S'])
+        self.infectados = np.array([c for c in comunidad.ciudadanos if c.estado == 'I'])
+        self.recuperados = np.array([c for c in comunidad.ciudadanos if c.estado == 'R'])
 
     def run(self, pasos):
-        for dia in range(pasos):
+        for _ in range(pasos):
             self.comunidad.actualizar_contactos_diarios()  # Actualizar los contactos diarios
             self.simular_paso()
-            print(f"Dia {dia + 1}: Susceptibles: {len(self.susceptibles)}, Infectados: {len(self.infectados)}, Recuperados: {len(self.recuperados)}")
 
     def simular_paso(self):
         nuevos_infectados = []
@@ -43,12 +43,12 @@ class Simulador:
         # Actualización de estados
         for infectado in nuevos_infectados:
             if infectado in self.susceptibles:
-                self.susceptibles.remove(infectado)
+                self.susceptibles = np.delete(self.susceptibles, np.where(self.susceptibles == infectado))
                 infectado.estado = 'I'
                 infectado.pasos_infectado = 0
-                self.infectados.append(infectado)
+                self.infectados = np.append(self.infectados, infectado)
 
         for recuperado in nuevos_recuperados:
-            self.infectados.remove(recuperado)
+            self.infectados = np.delete(self.infectados, np.where(self.infectados == recuperado))
             recuperado.estado = 'R'
-            self.recuperados.append(recuperado)
+            self.recuperados = np.append(self.recuperados, recuperado)
