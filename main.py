@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_gtk4agg import FigureCanvasGTK4Agg as FigureCanvas
-from matplotlib.collections import EventCollection
 
 from enfermedad import Enfermedad
 from comunidad import Comunidad
@@ -73,7 +72,7 @@ class MainWindow(Gtk.ApplicationWindow):
         for action in actions:
             actions_model.append(action)
         self.actions_dropdown = Gtk.DropDown(model=actions_model)
-        self.actions_dropdown.connect("notify::selected", self.perform_action)
+        self.actions_dropdown.connect("notify::selected", self.actualizar_graficos)
         self.main_box.append(self.actions_dropdown)
 
         self.info_label = Gtk.Label(label="")
@@ -88,8 +87,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.about.set_transient_for(self)
         self.about.set_modal(self)
 
-        self.about.set_authors(["Tu Nombre"])
-        self.about.set_copyright("Copyright 2024 Tu Nombre")
+        self.about.set_authors(["Cristopher Alejandro de Jesús Reyes Chávez"])
+        self.about.set_copyright("Copyright 2024 Cristopher Reyes")
         self.about.set_license_type(Gtk.License.GPL_3_0)
         self.about.set_website("http://example.com")
         self.about.set_website_label("Mi Sitio Web")
@@ -108,14 +107,12 @@ class MainWindow(Gtk.ApplicationWindow):
         self.info_label.set_text("Simulación completada. Datos actualizados.")
         self.actualizar_graficos()
 
-    def actualizar_graficos(self):
-        if self.actions_dropdown.get_selected() == 0:
-            self.mostrar_grafico_lineas()
-        elif self.actions_dropdown.get_selected() == 1:
-            self.mostrar_grafico_barras()
+    def actualizar_graficos(self, *args):
+        if not self.resultados or not all(len(lista) > 0 for lista in zip(*self.resultados)):
+            self.info_label.set_text("No hay datos de simulación para mostrar.")
+            return
 
-    def perform_action(self, dropdown, g_param):
-        selected_index = dropdown.get_selected()
+        selected_index = self.actions_dropdown.get_selected()
         if selected_index == -1:
             self.info_label.set_text("Por favor, seleccione una acción.")
             return
