@@ -34,11 +34,15 @@ class Simulador:
             if infectado.pasos_infectado >= 15 or random.random() < tasa_recuperacion:
                 self.recuperar_infectado(infectado)
 
-    def infectar_contacto(self, contacto):
+     def infectar_contacto(self, contacto):
         if contacto in self.susceptibles:
             self.susceptibles = np.array([c for c in self.susceptibles if c != contacto])
             contacto.estado = 'I'
             contacto.pasos_infectado = 0
             self.infectados = np.append(self.infectados, contacto)
 
- 
+    def recuperar_infectado(self, infectado):
+        if infectado in self.infectados:
+            self.infectados = np.array([c for c in self.infectados if c != infectado])
+            infectado.estado = 'R'
+            self.recuperados = np.append(self.recuperados, infectado)
